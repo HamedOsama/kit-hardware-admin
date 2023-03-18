@@ -1,5 +1,6 @@
-import { Toaster } from 'react-hot-toast'
 import type { AppProps } from 'next/app'
+import { Toaster } from 'react-hot-toast'
+import NextNProgress from 'nextjs-progressbar';
 
 
 import '../styles/globals.css'
@@ -8,8 +9,9 @@ import '../styles/globals.css'
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <>
-        <Toaster position="top-right" />        
-          <Component {...pageProps} />
+      <NextNProgress />
+      <Toaster position="top-right" />
+      <Component {...pageProps} />
     </>
   )
 }
