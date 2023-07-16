@@ -14,16 +14,19 @@ import DeleteModal from '@components/Modals/DeleteModal'
 import { useRouter } from 'next/router'
 import DragAndDrop from '@components/DragAndDrop/DragAndDrop'
 import { FormControl, FormHelperText, InputLabel, MenuItem, Select } from '@mui/material'
+import useDebounce from '../../hooks/use-debounce'
+import Search from '@components/Search/Search'
 
 
 interface IProductProps {
   linkQuery: string
   page: string
   limit: string
+  initialSearchQuery: string
 }
 
 axios.defaults.withCredentials = true;
-const index = ({ linkQuery, page, limit }: IProductProps) => {
+const index = ({ linkQuery, page, limit, initialSearchQuery }: IProductProps) => {
 
   const router = useRouter();
 
@@ -41,6 +44,9 @@ const index = ({ linkQuery, page, limit }: IProductProps) => {
   const [currentPage, setCurrentPage] = React.useState<number>(page ? parseInt(page) : 1);
   const [limitPerPage, setLimitPerPage] = React.useState<number>(limit ? parseInt(limit) : 10);
   const [query, setQuery] = React.useState<string>(linkQuery || '?limit=10');
+  const [searchQuery, setSearchQuery] = React.useState<string>(initialSearchQuery || '');
+
+  const debouncedSearch = useDebounce(searchQuery, 1000);
 
   useEffect(() => {
     const getProducts = async () => {
@@ -61,6 +67,8 @@ const index = ({ linkQuery, page, limit }: IProductProps) => {
     let query = `?limit=${limitPerPage}`
     if (currentPage > 1)
       query += `&page=${currentPage}`
+    if (debouncedSearch)
+      query += `&name=${debouncedSearch}`
     const formattedQuery = new URLSearchParams(query).toString().replaceAll('+', '%20');
     setQuery(formattedQuery)
 
@@ -68,7 +76,7 @@ const index = ({ linkQuery, page, limit }: IProductProps) => {
       router.push(`/products?${formattedQuery}`)
     else
       router.push(`/products`)
-  }, [currentPage])
+  }, [currentPage, debouncedSearch])
   const handlePageClick = (e: any) => {
     setCurrentPage(e.selected + 1)
   };
@@ -582,6 +590,11 @@ const index = ({ linkQuery, page, limit }: IProductProps) => {
         )
       }
 
+      <Search
+          setValue={setSearchQuery}
+          value={searchQuery}
+        />
+
       <Table
         heads={[
           { title: 'Images', key: 'images' },
@@ -680,7 +693,8 @@ export async function getServerSideProps(context: any) {
       return {
         props: {
           linkQuery: formattedQuery,
-          page: query?.page || null
+          page: query?.page || null,
+          initialSearchQuery: query?.name || null,
         },
       }
     return {
